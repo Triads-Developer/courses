@@ -100,20 +100,7 @@ function Controls() {
           <Box className={hideFilters ? 'hidden' : ''} sx={{ m: 3, marginTop: '25px' }}>
             <Box sx={{ maxWidth: '100%', pb: '1em' }}>
               <p>
-                This site will allow you to view, query and export data from the UNFCCC COP 29 Final List of Participants data set (FLOP
-                data) for on-site delegates.
-              </p>
-              <p>
-                This data comes from the <Link href='https://unfccc.int/documents/644762'> UNFCCC Final List of Participants</Link> and{' '}
-                <Link href='https://unfccc.int/documents/644763'>it’s associated on-site delegates-excel file</Link>. The excel file
-                separates delegate by badge category and draws its data from what is submitted when a delegate is nominated and confirmed.
-              </p>
-              <p>
-                This is a work in progress, and we hope it is helpful to you in your research and helps provide transparency of COP
-                attendance. Let us know{' '}
-                <Link hrf='https://docs.google.com/forms/d/e/1FAIpQLSdo2VOtnncR_F0PIWuHiKA4XdKa1Syq9N38jDZk7gu9bIR_ow/viewform'>
-                  how you are using the data and if you have any suggestions for improvement by completing this form.
-                </Link>
+                This site will allow you to search for courses
               </p>
             </Box>
 
@@ -126,10 +113,6 @@ function Controls() {
               allowMultiple={true}
             />
 
-            <Box sx={{ maxWidth: '100%' }}>
-              <p>{Constants.nominatorInstructions}</p>
-            </Box>
-
             <Dropdown
               label='Nominator'
               val={nominator}
@@ -138,11 +121,7 @@ function Controls() {
               allowMultiple={true}
             />
 
-            <Box sx={{ maxWidth: '100%' }}>
-              <p>{Constants.relationInstructions}</p>
-            </Box>
-
-            <Dropdown
+           <Dropdown
               label='Relation to Nominator'
               val={relation}
               handleValChange={handleRelationChange}
@@ -150,12 +129,7 @@ function Controls() {
               allowMultiple={true}
             />
 
-            <Box sx={{ maxWidth: '100%' }}>
-              <p>{Constants.searchBoxInstructions}</p>
-              <p>{Constants.searchBoxNote}</p>
-            </Box>
-
-            <TextField
+           <TextField
               sx={{ width: '100%' }}
               id='outlined-controlled'
               label='Title, Department, Organization, Nominated By, and Name'
