@@ -1,0 +1,148 @@
+.App {
+  text-align: center;
+  font-family: "IvyStyle", Calibri, sans-serif;
+  background-color: white;
+  font-size: 16px;
+  min-height: 100vh;
+  height: auto;
+}
+
+/* Prevent scrolling when no results */
+body.no-results {
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Allow scrolling when results are present */
+body.has-results {
+  min-height: 100vh;
+}
+
+.MuiDataGrid-row {
+  background-color: white;
+}
+
+.MuiDataGrid-row:hover {
+  cursor: pointer;
+}
+
+.MuiPopover-paper {
+    left: 715px;
+}
+
+.App-header {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.MuiFormControl-root {
+    background-color: white;
+    width: 100%;
+}
+
+.tooltip {
+    z-index: 10;
+    max-width: 200px;
+    word-wrap: break-word;
+    font-size: 16px;
+}
+
+.format-strings {
+  text-transform: capitalize;
+  overflow-y: visible;
+  display:block;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.tutorial-box {
+  background-color: #D9D9D9;
+  color: black;
+  border-radius:  10px;
+  padding: 2em;
+}
+
+.hidden {
+  display: none;
+}
+
+#tutorial-button {
+    background-color: #BA0C2F;
+    color: white;
+    margin: l0px;
+    border: 2px solid #BA0C2F;
+
+    &:hover {
+      background-color: #D9D9D9;
+      color: #BA0C2F;
+      border: 2px solid #BA0C2F;
+    }
+}
+
+#search-button {
+    background-color: #BA0C2F;
+    color: white;
+    margin: l0px;
+    border: 2px solid #BA0C2F;
+
+    &:hover {
+      background-color: #D9D9D9;
+      color: #BA0C2F;
+      border: 2px solid #BA0C2F;
+    }
+
+    &:disabled {
+      background-color: grey;
+      border: 2px solid grey;
+    }
+}
+
+/* Filter buttons styling */
+.filter-buttons .MuiButton-root {
+    background-color: #BA0C2F;
+    color: white;
+    border: 2px solid #BA0C2F;
+    margin: 20px;
+    text-transform: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.filter-buttons .MuiButton-root:hover {
+    background-color: #D9D9D9;
+    color: #BA0C2F;
+    border: 2px solid #BA0C2F;
+}
+
+.search-fields {
+  background-color: #D9D9D9;
+  color: black;
+  border-radius:  10px;
+  width: 100%;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: auto;
+  height: auto;
+
+  &.search-fields-base {
+    min-height: 100vh;
+    padding: 2em;
+  }
+}
+
+.search-fields:has(.hidden) {
+  padding: 0.1em;
+}
+
+/* Reduce left margin for the controls section */
+.search-fields-form {
+  width: 75%;
+  margin-left: 0.5em !important;
+}

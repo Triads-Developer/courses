@@ -75,8 +75,10 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.development
 .env.development.local
 .env.test.local
+.env.production
 .env.production.local
 .env.local
 
@@ -132,3 +134,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# SSL certificates
+courses-server/ssl/
+courses-server/data/data.csv
+courses-server/data backup
+courses-server/data backup/small-semester.csv
+courses-ui/build

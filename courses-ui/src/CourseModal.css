@@ -1,0 +1,48 @@
+.common-course-info-column {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.common-course-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.description-info-label {
+  font-weight: bold;
+  padding-right: 8px;
+}
+
+.common-course-info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.common-course-info-label {
+  min-width: 240px;
+  font-weight: bold;
+  justify-content: flex-start;
+}
+
+.common-course-info-value {
+  flex: 1;
+}
+
+.section-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.section-details-table th,
+.section-details-table td {
+  border: 1px solid #ccc;
+  padding: 4px;
+  font-size: 14px;
+} 
