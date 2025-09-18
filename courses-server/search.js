@@ -34,10 +34,11 @@ function search(data, filters) {
     }
 
     if (academicRequirements && Array.isArray(academicRequirements) && academicRequirements.length > 0) {
+      mergedAcademicRequirements = academicRequirements.join(', ');
       filteredData = filteredData.filter(item => {
         if (!item || typeof item !== 'object') return false;
         const itemRequirement = item['Academic Requirement'];
-        return itemRequirement !== undefined && itemRequirement !== null && academicRequirements.includes(itemRequirement);
+        return itemRequirement !== undefined && itemRequirement !== null && mergedAcademicRequirements.includes(itemRequirement);
       });
     }
 
@@ -109,8 +110,8 @@ function search(data, filters) {
               .map(attr => attr.trim())
               .filter(attr => attr.length > 0)
               .sort();
-              
-              return validItemAttrs.join(',').includes(validFilterAttrs.join(','));
+            
+              return validFilterAttrs.every(attr => validItemAttrs.includes(attr));
           }
         } catch (error) {
           console.error('search: Error in IQ attributes filtering:', error);
