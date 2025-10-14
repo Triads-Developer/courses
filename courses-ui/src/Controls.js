@@ -194,14 +194,14 @@ function Controls() {
         searchTerms: searchTerms,
         department: department,
         description: description,
-        days: selectedDays.join(','),
-        levels: selectedLevels.join(','),
+        days: JSON.stringify(selectedDays),
+        levels: JSON.stringify(selectedLevels),
         page: paginationModel.page,
-        iqAttributes: selectedIQAttributes.join(','),
+        iqAttributes: JSON.stringify(selectedIQAttributes),
         academicRequirements: academicRequirements,
-        startTimes: startTimes.join(','),
-        semesters: selectedPeriods.join(','),
-        courseSectionOwningAU: courseSectionOwningAU.join(','),
+        startTimes: JSON.stringify(startTimes),
+        semesters: JSON.stringify(selectedPeriods),
+        courseSectionOwningAU: JSON.stringify(courseSectionOwningAU),
         pageSize: paginationModel.pageSize
       })
 
