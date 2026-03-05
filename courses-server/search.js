@@ -12,7 +12,7 @@ function search(data, filters) {
     return data; // Return all data if no valid filters
   }
 
-  const { days, levels, searchTerms, department, description, iqAttributes, academicRequirements, startTimes, semesters, courseSectionOwningAU } = filters;
+  const { days, levels, searchTerms, department, description, iqAttributes, integrationAttributes, academicRequirements, startTimes, semesters, courseSectionOwningAU } = filters;
   let filteredData = data;
 
   try {
@@ -115,6 +115,40 @@ function search(data, filters) {
           }
         } catch (error) {
           console.error('search: Error in IQ attributes filtering:', error);
+          return false;
+        }
+      });
+    }
+
+    // Filter by Integration Attributes with defensive checks
+    if (integrationAttributes && Array.isArray(integrationAttributes) && integrationAttributes.length > 0) {
+      filteredData = filteredData.filter(item => {
+        if (!item || typeof item !== 'object') return false;
+        
+        const itemIntegrationAttributes = item.integrationAttributes;
+        if (!itemIntegrationAttributes || !Array.isArray(itemIntegrationAttributes)) return false;
+
+        try {
+          if (integrationAttributes.length === 1) {
+            return itemIntegrationAttributes.includes(integrationAttributes[0]);
+          } else {
+            // Ensure both arrays contain only strings and are properly sorted
+            const validItemAttrs = itemIntegrationAttributes
+              .filter(attr => attr !== null && attr !== undefined && typeof attr === 'string')
+              .map(attr => attr.trim())
+              .filter(attr => attr.length > 0)
+              .sort();
+            
+            const validFilterAttrs = integrationAttributes
+              .filter(attr => attr !== null && attr !== undefined && typeof attr === 'string')
+              .map(attr => attr.trim())
+              .filter(attr => attr.length > 0)
+              .sort();
+            
+              return validFilterAttrs.every(attr => validItemAttrs.includes(attr));
+          }
+        } catch (error) {
+          console.error('search: Error in Integration attributes filtering:', error);
           return false;
         }
       });

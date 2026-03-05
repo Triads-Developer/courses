@@ -12,7 +12,7 @@ function createCourseRoutes(dataLoader) {
   // GET /api/courses/courses - Main course search endpoint
   router.get('/courses', async (req, res) => {
     try {
-      const { page = 0, pageSize = 25, searchTerms = '', days = '', levels = '', department = '', description = '', academicRequirements = '', iqAttributes = '', startTimes = '', semesters = '', courseSectionOwningAU = '' } = req.query;
+      const { page = 0, pageSize = 25, searchTerms = '', days = '', levels = '', department = '', description = '', academicRequirements = '', iqAttributes = '', integrationAttributes = '', startTimes = '', semesters = '', courseSectionOwningAU = '' } = req.query;
 
       // Validate and sanitize parameters
       const { page: validatedPage, pageSize: validatedPageSize } = validatePaginationParams(page, pageSize);
@@ -23,6 +23,7 @@ function createCourseRoutes(dataLoader) {
       const validatedDescription = validateStringParam(description);
       const validatedAcademicRequirements = validateArrayParam(academicRequirements);
       const validatedIqAttributes = validateArrayParam(iqAttributes);
+      const validatedIntegrationAttributes = validateArrayParam(integrationAttributes);
       const validatedStartTimes = validateArrayParam(startTimes);
       const validatedSemesters = validateArrayParam(semesters);
       const validatedCourseSectionOwningAU = validateArrayParam(courseSectionOwningAU);
@@ -45,6 +46,7 @@ function createCourseRoutes(dataLoader) {
         academicRequirements: validatedAcademicRequirements,
         startTimes: validatedStartTimes,
         iqAttributes: validatedIqAttributes,
+        integrationAttributes: validatedIntegrationAttributes,
         semesters: validatedSemesters,
         courseSectionOwningAU: validatedCourseSectionOwningAU
       };

@@ -15,7 +15,7 @@ class DataLoader {
 
   // Function to generate a unique ID for a course
   generateCourseId(row) {
-    return `${row['Program of Study']}-${row['Course Subject Abbreviation']}-${row['Course Number']}-${row['Section Number']}`;
+    return `${row['Program of Study']}-${row['Course Subject Abbreviation']}-${row['Course Number']}-${row['Section Number']}-${row['Academic Period'] || ''}`;
   }
 
   generateCommonID(row) {
@@ -40,6 +40,17 @@ class DataLoader {
     }
     // Split by comma and trim whitespace, filter out empty strings
     return iqAttributesString.split(',').map(attr => attr.trim()).filter(attr => attr.length > 0);
+  }
+
+  // Function to parse Integration Attributes from string to array
+  // Note: Integration Attributes are complete values, not comma-separated lists
+  // Each value is a full integration attribute specification (e.g., "ArtSci Integration – IQ, Life and Physical Sciences, NSM")
+  parseIntegrationAttributes(integrationAttributesString) {
+    if (!integrationAttributesString || integrationAttributesString.trim() === '') {
+      return [];
+    }
+    // Return the complete value as a single-item array (not split by comma)
+    return [integrationAttributesString.trim()];
   }
 
   // Function to sort time strings properly (AM first, then PM, each group sorted numerically)
@@ -104,6 +115,9 @@ class DataLoader {
           // Parse IQ Attributes
           const iqAttributes = this.parseIQAttributes(row['IQ Attributes']);
 
+          // Parse Integration Attributes
+          const integrationAttributes = this.parseIntegrationAttributes(row['Integration Attribute']);
+
           // Add program of study to uniqueProgramOfStudy if it's not already in the array
           if (!uniquePrograms.includes(row['Program of Study'])) {
             uniquePrograms.push(row['Program of Study']);
@@ -132,7 +146,8 @@ class DataLoader {
               ...row,
               id: courseId,
               commonID: commonID,
-              iqAttributes: iqAttributes // Add parsed IQ Attributes as an array
+              iqAttributes: iqAttributes, // Add parsed IQ Attributes as an array
+              integrationAttributes: integrationAttributes // Add parsed Integration Attributes as an array
             });
           } else {
             duplicateCount++;
