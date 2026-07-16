@@ -160,6 +160,10 @@ function Controls() {
         pageSize: paginationModel.pageSize
       })
 
+      if (semesters.length < 1) {
+        throw new Error(`Missing Required Field: Academic Period`)
+      }
+
       const coursesResponse = await fetch(`${API_BASE_URL}/courses?${params}`)
       if (!coursesResponse.ok) {
         throw new Error(`HTTP error! status: ${coursesResponse.status}`)
@@ -184,12 +188,14 @@ function Controls() {
   }
 
   const handleSearchClick = () => {
+    setError(null)
     setLoading(true)
     fetchCourseData()
     setSearchPerformed(true)
   }
 
   const resetFilters = () => {
+    setError(null)
     setSearchTerms('')
     setDescription('')
     setDepartment('')
@@ -346,6 +352,18 @@ function Controls() {
     <>
       <div className={filteredRows.length === 0 ? 'search-fields search-fields-base' : 'search-fields'}>
         <Box className={hideFilters || showModal ? 'search-fields-form hidden' : 'search-fields-form'} sx={{ m: 3, marginTop: '25px' }}>
+          {semestersOptions.length > 1 && (
+            <Dropdown
+              label='Filter by Academic Period*'
+              val={semesters}
+              handleValChange={handleSelectedSemestersChange}
+              options={semestersOptions}
+              allowMultiple={true}
+              required={true}
+              error={error}
+            />
+          )}
+
           <Autocomplete
             sx={{ width: '100%', mb: 2 }}
             id='outlined-controlled'
@@ -474,16 +492,6 @@ function Controls() {
             allowMultiple={true}
           />
 
-          {semestersOptions.length > 1 && (
-            <Dropdown
-              label='Filter by Academic Period'
-              val={semesters}
-              handleValChange={handleSelectedSemestersChange}
-              options={semestersOptions}
-              allowMultiple={true}
-            />
-          )}
-
           {departmentsOptions.length > 1 && (
             <Dropdown
               label='Filter by Offering Department'
@@ -513,11 +521,16 @@ function Controls() {
             </div>
           )}
         </Box>
-          {filteredRows.length === 0 && !loading && searchPerformed && (
+          {filteredRows.length === 0 && !loading && searchPerformed && !error && (
           <div className='no-results'>
             <h1>No results found</h1>
-          </div>
-      )}
+          </div>)}
+
+        {filteredRows.length === 0 && !loading && searchPerformed && error && (
+          <div className='no-results'>
+            <h1>Error: {error}</h1>
+          </div>)}
+
       </div>
       <CourseModal 
         isOpen={showModal}

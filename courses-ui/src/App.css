@@ -67,6 +67,11 @@ body.has-results {
   padding: 2em;
 }
 
+.error-missing-field {
+  outline: solid;
+  outline-color: red;
+}
+
 .hidden {
   display: none;
 }

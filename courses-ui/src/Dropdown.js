@@ -8,7 +8,7 @@ import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import { iqAttributesOptions } from './Constants.js'
 
-function Dropdown({ label, val, handleValChange, options, allowMultiple }) {
+function Dropdown({ label, val, handleValChange, options, allowMultiple, error}) {
   const formatName = (name) => {
     if (iqAttributesOptions[name]) {  // if the name is an IQ attribute, format it as "IQ Attribute (name)"
       return iqAttributesOptions[name] + ' (' + name + ')'
@@ -19,7 +19,7 @@ function Dropdown({ label, val, handleValChange, options, allowMultiple }) {
   }
 
   return (
-    <Box sx={{ width: '100%', marginBottom: '10px' }}>
+    <Box sx={{ width: '100%', marginBottom: '10px' }} className={error && error.includes('Missing Required Field') ? 'error-missing-field' : ''} > 
       <FormControl>
         <InputLabel id='demo-simple-select-label'>{label}</InputLabel>
         <Select
@@ -33,7 +33,7 @@ function Dropdown({ label, val, handleValChange, options, allowMultiple }) {
           slotProps={{ popup: { disablePortal: false } }}
         >
           <MenuItem key='clear' value='clear'>
-            Clear selection
+            Clear selection 
           </MenuItem>
 
           <MenuItem key='all' value='all'>
@@ -67,7 +67,8 @@ Dropdown.propTypes = {
   val: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   handleValChange: PropTypes.func,
   options: PropTypes.array,
-  allowMultiple: PropTypes.bool
+  allowMultiple: PropTypes.bool,
+  error: PropTypes.string
 }
 
 export default Dropdown
