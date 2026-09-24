@@ -1,6 +1,6 @@
 const Fuse = require('fuse.js');
 
-function search(data, filters) {
+function search(data, filters, descriptionIndex) {
   // Validate input parameters
   if (!data || !Array.isArray(data)) {
     console.error('search: Invalid data parameter - expected array');
@@ -79,7 +79,7 @@ function search(data, filters) {
 
     if (description && typeof description === 'string' && description.trim() !== '') {
       try {
-        filteredData = filterByValue(filteredData, ['Description'], description);
+        filteredData = filterByDescription(filteredData, description, descriptionIndex);
       } catch (error) {
         console.error('search: Error in description filtering:', error);
         // Continue with current filteredData if search fails
@@ -220,4 +220,31 @@ function filterByValue(data, filterKeys, searchTerms, threshold = 0.5) {
   }
 }
 
-module.exports = search; 
+// Full-text search over the Description field, scoped to whatever survived the
+// other filters. Queries the persistent MiniSearch index (built once at CSV-load
+// time over the deduplicated course list, see data_loader.js) rather than
+// rebuilding an index per request, then maps matches back onto filteredData by
+// commonID. Requires every query term to match (combineWith: 'AND') so
+// multi-word queries like "hip hop" behave like a phrase search rather than
+// Fuse's edit-distance fuzziness diluting relevance.
+function filterByDescription(data, query, descriptionIndex) {
+  if (!data || !Array.isArray(data) || data.length === 0) return [];
+  if (!query || typeof query !== 'string' || query.trim() === '') return data;
+
+  if (!descriptionIndex) {
+    console.error('filterByDescription: No description index available');
+    return data;
+  }
+
+  try {
+    const results = descriptionIndex.search(query, { combineWith: 'AND', prefix: true });
+    const matchedCommonIds = new Set(results.map(result => result.id));
+
+    return data.filter(item => matchedCommonIds.has(item.commonID));
+  } catch (error) {
+    console.error('filterByDescription: Error during search:', error);
+    return data;
+  }
+}
+
+module.exports = search;

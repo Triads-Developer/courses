@@ -1,11 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const csv = require('fast-csv');
+const MiniSearch = require('minisearch');
 
 class DataLoader {
   constructor() {
     this.courseData = []; // Larger dataset with all courses
     this.uniqueCourseData = []; // Smaller dataset with duplicates removed based on commonId
+    this.descriptionIndex = null; // MiniSearch index over uniqueCourseData, built once per load
     this.isDataLoaded = false;
     this.uniqueProgramsOfStudy = [];
     this.uniqueAcademicRequirements = [];
@@ -156,6 +158,17 @@ class DataLoader {
         .on('end', () => {  
           this.courseData = data; // Store the larger dataset
           this.uniqueCourseData = this.removeDuplicatesByCommonId(data); // Create smaller dataset
+
+          // Build the Description search index once per load, over the deduplicated
+          // set only -- courseData repeats the same Description text once per Program
+          // of Study/Academic Requirement a section satisfies, so indexing it directly
+          // would tokenize the same text dozens of times over for no benefit.
+          this.descriptionIndex = new MiniSearch({
+            idField: 'commonID',
+            fields: ['Description']
+          });
+          this.descriptionIndex.addAll(this.uniqueCourseData);
+
           this.uniqueProgramsOfStudy = uniquePrograms.sort();
           this.uniqueAcademicRequirements = uniqueRequirements.sort();
           this.uniqueStartTimes = this.sortTimeStrings(startTimes); // Sort times
@@ -173,6 +186,7 @@ class DataLoader {
     return {
       courseData: this.courseData,
       uniqueCourseData: this.uniqueCourseData,
+      descriptionIndex: this.descriptionIndex,
       isDataLoaded: this.isDataLoaded,
       uniqueProgramsOfStudy: this.uniqueProgramsOfStudy,
       uniqueAcademicRequirements: this.uniqueAcademicRequirements,

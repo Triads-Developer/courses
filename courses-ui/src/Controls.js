@@ -453,7 +453,7 @@ function Controls() {
             }}
           />
 
-          {false && <TextField
+          <TextField
             sx={{ width: '100%', mb: 2 }}
             id='outlined-controlled'
             label='Search by Description'
@@ -466,7 +466,7 @@ function Controls() {
                 handleSearchClick()
               }
             }}
-          /> }
+          />
 
           <Dropdown
             label='Filter by Days'

@@ -29,8 +29,8 @@ function createCourseRoutes(dataLoader) {
       const validatedCourseSectionOwningAU = validateArrayParam(courseSectionOwningAU);
 
       // Get data from loader
-      const { courseData, isDataLoaded } = dataLoader.getData();
-      
+      const { courseData, descriptionIndex, isDataLoaded } = dataLoader.getData();
+
       if (!validateDataStructure(courseData, 'courseData')) {
         return res.status(500).json({ error: 'Course data not available' });
       }
@@ -59,7 +59,7 @@ function createCourseRoutes(dataLoader) {
         description: validatedDescription
       };
       
-      let filteredData = search(courseData, searchFilters);
+      let filteredData = search(courseData, searchFilters, descriptionIndex);
 
       // Apply pagination
       const startIndex = validatedPage * validatedPageSize;
