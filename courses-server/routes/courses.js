@@ -21,7 +21,10 @@ function createCourseRoutes(dataLoader) {
       const validatedLevels = validateArrayParam(levels);
       const validatedDepartment = validateStringParam(department);
       const validatedDescription = validateStringParam(description);
-      const validatedAcademicRequirements = validateArrayParam(academicRequirements);
+      // Single-select in the UI, sent as a raw string. Requirement names contain
+      // commas, so don't run it through validateArrayParam's comma split.
+      const validatedAcademicRequirement = validateStringParam(academicRequirements);
+      const validatedAcademicRequirements = validatedAcademicRequirement ? [validatedAcademicRequirement] : [];
       const validatedIqAttributes = validateArrayParam(iqAttributes);
       const validatedIntegrationAttributes = validateArrayParam(integrationAttributes);
       const validatedStartTimes = validateArrayParam(startTimes);
@@ -80,15 +83,18 @@ function createCourseRoutes(dataLoader) {
     }
   });
 
-  // GET /api/courses/section/:sectionNumber - Get courses by section number
+  // GET /api/courses/section/:sectionNumber - Get every row for a section number
+  // (one per Program of Study / Academic Requirement / meeting time), optionally
+  // limited to one Academic Period. Not paginated: the course modal needs the full
+  // list, and a single section has at most a couple hundred rows.
   router.get('/section/:sectionNumber', async (req, res) => {
     try {
-      const { page = 0, pageSize = 25 } = req.query;
+      const { academicPeriod = '' } = req.query;
       const sectionNumber = req.params.sectionNumber;
 
       // Validate and sanitize parameters
-      const { page: validatedPage, pageSize: validatedPageSize } = validatePaginationParams(page, pageSize);
       const validatedSectionNumber = validateStringParam(sectionNumber);
+      const validatedAcademicPeriod = validateStringParam(academicPeriod);
 
       if (!validatedSectionNumber) {
         return res.status(400).json({ error: 'Invalid section number' });
@@ -106,21 +112,14 @@ function createCourseRoutes(dataLoader) {
       }
 
       // Filter by section number
-      const filteredData = courseData.filter(course => 
-        course['Section Number'] && course['Section Number'].toString() === validatedSectionNumber
+      const filteredData = courseData.filter(course =>
+        course['Section Number'] && course['Section Number'].toString() === validatedSectionNumber &&
+        (!validatedAcademicPeriod || course['Academic Period'] === validatedAcademicPeriod)
       );
 
-      // Apply pagination
-      const startIndex = validatedPage * validatedPageSize;
-      const endIndex = startIndex + validatedPageSize;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-
       res.json({
-        data: paginatedData,
-        total: filteredData.length,
-        page: validatedPage,
-        pageSize: validatedPageSize,
-        totalPages: Math.ceil(filteredData.length / validatedPageSize)
+        data: filteredData,
+        total: filteredData.length
       });
 
     } catch (error) {

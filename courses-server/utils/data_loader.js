@@ -15,9 +15,13 @@ class DataLoader {
     this.uniqueAcademicPeriods = [];
   }
 
-  // Function to generate a unique ID for a course
+  // Function to generate a unique ID for a course row. Must include Academic
+  // Requirement and the meeting pattern: a section is listed once per requirement
+  // it satisfies (and once per meeting time), and dropping any of those rows hides
+  // the section from that requirement's search. Results are collapsed to one row
+  // per section after filtering instead (see collapseToOneRowPerSection in search.js).
   generateCourseId(row) {
-    return `${row['Program of Study']}-${row['Course Subject Abbreviation']}-${row['Course Number']}-${row['Section Number']}-${row['Academic Period'] || ''}`;
+    return `${row['Program of Study']}-${row['Course Subject Abbreviation']}-${row['Course Number']}-${row['Section Number']}-${row['Academic Period'] || ''}-${row['Academic Requirement']}-${row['Days']}-${row['Start Time']}-${row['End Time']}`;
   }
 
   generateCommonID(row) {

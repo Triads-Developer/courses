@@ -29,8 +29,11 @@ function CourseModal({ isOpen, onClose, selectedCourse }) {
     try {
       console.log("fetching courses", selectedCourse.row["Section Number"])
       const sectionNumber = selectedCourse.row["Section Number"]
+      const params = new URLSearchParams({
+        academicPeriod: selectedCourse.row["Academic Period"] || ''
+      })
 
-      const response = await fetch(`${API_BASE_URL}/section/${sectionNumber}`)
+      const response = await fetch(`${API_BASE_URL}/section/${encodeURIComponent(sectionNumber)}?${params}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

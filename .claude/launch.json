@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "courses-server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "courses-server", "start"],
+      "port": 3000
+    },
+    {
+      "name": "courses-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "courses-ui", "start"],
+      "port": 3001
+    }
+  ]
+}

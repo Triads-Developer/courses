@@ -34,11 +34,10 @@ function search(data, filters, descriptionIndex) {
     }
 
     if (academicRequirements && Array.isArray(academicRequirements) && academicRequirements.length > 0) {
-      mergedAcademicRequirements = academicRequirements.join(', ');
       filteredData = filteredData.filter(item => {
         if (!item || typeof item !== 'object') return false;
         const itemRequirement = item['Academic Requirement'];
-        return itemRequirement !== undefined && itemRequirement !== null && mergedAcademicRequirements.includes(itemRequirement);
+        return itemRequirement !== undefined && itemRequirement !== null && academicRequirements.includes(itemRequirement);
       });
     }
 
@@ -75,15 +74,6 @@ function search(data, filters, descriptionIndex) {
         return itemDepartment !== undefined && itemDepartment !== null && 
                courseSectionOwningAU.includes(itemDepartment);
       });
-    }
-
-    if (description && typeof description === 'string' && description.trim() !== '') {
-      try {
-        filteredData = filterByDescription(filteredData, description, descriptionIndex);
-      } catch (error) {
-        console.error('search: Error in description filtering:', error);
-        // Continue with current filteredData if search fails
-      }
     }
 
     // Filter by IQ Attributes with defensive checks
@@ -153,7 +143,22 @@ function search(data, filters, descriptionIndex) {
         }
       });
     }
-    
+
+    // Every per-row filter above has run, so collapse to one row per section before
+    // the text searches. Description and the fuzzy-search fields are the same on
+    // every row of a section, so this doesn't change what matches -- it just keeps
+    // Fuse from scanning each section once per requirement it's listed under.
+    filteredData = collapseToOneRowPerSection(filteredData);
+
+    if (description && typeof description === 'string' && description.trim() !== '') {
+      try {
+        filteredData = filterByDescription(filteredData, description, descriptionIndex);
+      } catch (error) {
+        console.error('search: Error in description filtering:', error);
+        // Continue with current filteredData if search fails
+      }
+    }
+
     if (searchTerms && typeof searchTerms === 'string' && searchTerms.trim() !== '') {
       try {
         filteredData = filterByValue(filteredData, ['Section', 'Course Subject Abbreviation', 'Course Number', 'Course Title'], searchTerms, 0.3);
@@ -168,6 +173,20 @@ function search(data, filters, descriptionIndex) {
   }
 
   return filteredData;
+}
+
+// The data has one row per (section, Program of Study, Academic Requirement,
+// meeting time). Results show one row per section per semester; the full list of
+// programs/requirements for a section comes from the /section endpoint when a row
+// is clicked. Keeps the first row, i.e. one that matched the active filters.
+function collapseToOneRowPerSection(data) {
+  const seen = new Set();
+  return data.filter(item => {
+    const key = `${item['Section Number']}|${item['Academic Period'] || ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function filterByValue(data, filterKeys, searchTerms, threshold = 0.5) {
