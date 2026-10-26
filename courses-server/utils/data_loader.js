@@ -13,6 +13,7 @@ class DataLoader {
     this.uniqueAcademicRequirements = [];
     this.uniqueStartTimes = [];
     this.uniqueAcademicPeriods = [];
+    this.loadPromise = null; // In-flight loadCourseData(), shared by concurrent callers
   }
 
   // Function to generate a unique ID for a course row. Must include Academic
@@ -99,8 +100,28 @@ class DataLoader {
     return totalMinutes;
   }
 
-  // Function to load and parse CSV data
+  // Function to load and parse CSV data. Concurrent callers (file watcher, manual
+  // /reload) share the one load already in progress rather than each building a
+  // full copy of the data side by side -- that's what blew the heap on reload.
   loadCourseData() {
+    if (!this.loadPromise) {
+      this.loadPromise = this.readCourseData().finally(() => {
+        this.loadPromise = null;
+      });
+    }
+    return this.loadPromise;
+  }
+
+  readCourseData() {
+    // Release the previous load before parsing the new one, so a reload peaks at
+    // one copy of the data instead of two. Routes already answer 503 while
+    // isDataLoaded is false, so the old copy wasn't being served anyway. The small
+    // dropdown lists (uniqueProgramsOfStudy etc.) are kept so the UI stays usable.
+    this.isDataLoaded = false;
+    this.courseData = [];
+    this.uniqueCourseData = [];
+    this.descriptionIndex = null;
+
     return new Promise((resolve, reject) => {
       const data = [];
       const uniqueKeys = new Set(); // Track unique combinations
