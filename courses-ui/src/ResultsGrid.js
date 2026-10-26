@@ -22,16 +22,11 @@ function ResultsGrid({
     { field: 'Program of Study', headerName: 'Program', flex: 1, minWidth: 150 },
     { field: 'Academic Requirement', headerName: 'Requirement', flex: 1, minWidth: 150 },
     { field: 'Program of Study Type', headerName: 'Requirement Type', flex: 1, minWidth: 150 },
-    { 
-      field: 'iqAttributes', 
-      headerName: 'IQ Requirements', 
+    {
+      field: 'iqAttributes',
+      headerName: 'IQ Requirements',
       width: 150,
-      renderCell: (params) => {
-        if (params.value && Array.isArray(params.value)) {
-          return params.value.join(', ')
-        }
-        return ''
-      }
+      valueGetter: (value) => Array.isArray(value) ? value.join(', ') : ''
     },
     { field: 'Days', headerName: 'Days', width: 100 },
     { field: 'Start Time', headerName: 'Start Time', width: 100 },
@@ -59,7 +54,6 @@ function ResultsGrid({
           columns={columns}
           rowCount={rowCount}
           paginationModel={paginationModel}
-          sortModel={[{ field: 'Section', sort: 'asc' }]}
           disableToolbarButton={true}
           onPaginationModelChange={onPaginationModelChange}
           filterModel={filterModel}

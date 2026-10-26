@@ -102,6 +102,45 @@ function createMetadataRoutes(dataLoader) {
     }
   });
 
+  // Get unique Integration Attributes for filtering
+  router.get('/integration-attributes', (req, res) => {
+    try {
+      const { isDataLoaded, uniqueCourseData } = dataLoader.getData();
+      
+      if (!isDataLoaded) {
+        return res.status(503).json({ error: 'Data is still loading' });
+      }
+
+      // Validate uniqueCourseData
+      if (!validateDataStructure(uniqueCourseData, 'uniqueCourseData')) {
+        return res.status(500).json({ error: 'Data format error' });
+      }
+
+      const allIntegrationAttributes = new Set();
+      uniqueCourseData.forEach(course => {
+        try {
+          if (course && typeof course === 'object' && course.integrationAttributes && Array.isArray(course.integrationAttributes)) {
+            course.integrationAttributes.forEach(attr => {
+              if (attr && typeof attr === 'string' && attr.trim()) {
+                allIntegrationAttributes.add(attr.trim());
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error processing course Integration attributes:', error);
+          // Continue processing other courses
+        }
+      });
+
+      res.json({ 
+        integrationAttributes: Array.from(allIntegrationAttributes).sort() 
+      });
+    } catch (error) {
+      console.error('Error in /api/courses/integration-attributes:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   // Get unique Course Section Owning AU (Departments) for filtering
   router.get('/departments', (req, res) => {
     try {

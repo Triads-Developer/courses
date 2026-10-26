@@ -18,10 +18,25 @@ function validateStringParam(value, maxLength = 500) {
 // Helper function to validate and sanitize array parameters
 function validateArrayParam(value, maxItems = 50) {
   if (!value || typeof value !== 'string') return [];
-  return value.split(',')
-    .slice(0, maxItems)
-    .map(item => item.trim())
-    .filter(item => item.length > 0);
+  
+  try {
+    // Try to parse as JSON first (for arrays with comma-containing values)
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .slice(0, maxItems)
+        .map(item => typeof item === 'string' ? item.trim() : String(item).trim())
+        .filter(item => item.length > 0);
+    }
+  } catch (e) {
+    // Fall back to comma splitting for backward compatibility
+    return value.split(',')
+      .slice(0, maxItems)
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+  }
+  
+  return [];
 }
 
 // Helper function to validate data structure

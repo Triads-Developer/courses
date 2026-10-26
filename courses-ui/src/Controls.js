@@ -35,13 +35,14 @@ function Controls() {
   const [majorRequirement, setMajorRequirement] = React.useState([])
   const [selectedIQAttributes, setSelectedIQAttributes] = React.useState([])
   const [iqAttributesOptions, setIqAttributesOptions] = React.useState([])
+  const [selectedIntegrationAttributes, setSelectedIntegrationAttributes] = React.useState([])
+  const [integrationAttributesOptions, setIntegrationAttributesOptions] = React.useState([])
   const [academicRequirements, setAcademicRequirements] = React.useState('')
   const [programsOfStudyOptions, setProgramsOfStudyOptions] = React.useState([])
   const [academicRequirementsOptions, setAcademicRequirementsOptions] = React.useState([])
   const [startTimes, setStartTimes] = React.useState([])
   const [semesters, setSemesters] = React.useState([])
   const [semestersOptions, setSemestersOptions] = React.useState([])
-  const [semesterMapping, setSemesterMapping] = React.useState({})
   const [courseSectionOwningAU, setCourseSectionOwningAU] = React.useState([])
   const [departmentsOptions, setDepartmentsOptions] = React.useState([])
   const [searchPerformed, setSearchPerformed] = React.useState(false)
@@ -78,6 +79,20 @@ function Controls() {
     }
   }
 
+  // Function to fetch Integration Attributes from API
+  const fetchIntegrationAttributes = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/integration-attributes`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      setIntegrationAttributesOptions(data.integrationAttributes)
+    } catch (error) {
+      console.error('Error fetching Integration Attributes:', error)
+    }
+  }
+
   // Function to fetch Academic Requirements from API
   const fetchAcademicRequirements = async () => {
     try {
@@ -89,71 +104,18 @@ function Controls() {
     }
   }
 
-  // Function to fetch Semesters from API and create Season/Year mapping
+  // Function to fetch Semesters from API
   const fetchSemesters = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/semesters`)
       const data = await response.json()
       const allPeriods = data.semesters || []
       
-      // Parse periods to create Season/Year options and mapping
-      const seasonYearOptions = new Set()
-      const mapping = {}
-      
-      allPeriods.forEach(period => {
-        if (period && typeof period === 'string') {
-          // Extract year (4 digits)
-          const yearMatch = period.match(/\b(20\d{2})\b/)
-          if (yearMatch) {
-            const year = yearMatch[1]
-            
-            // Check for Fall, Spring, Summer, Winter
-            const seasonChecks = [
-              { keyword: 'fall', season: 'Fall' },
-              { keyword: 'spring', season: 'Spring' },
-              { keyword: 'summer', season: 'Summer' },
-              { keyword: 'winter', season: 'Winter' }
-            ]
-            
-            seasonChecks.forEach(({ keyword, season }) => {
-              if (period.toLowerCase().includes(keyword)) {
-                const seasonYear = `${season} ${year}`
-                seasonYearOptions.add(seasonYear)
-                
-                if (!mapping[seasonYear]) {
-                  mapping[seasonYear] = []
-                }
-                mapping[seasonYear].push(period)
-              }
-            })
-          }
-        }
-      })
-      
-      // Convert to sorted array
-      const sortedOptions = Array.from(seasonYearOptions).sort((a, b) => {
-        // Sort by year first, then by season (Fall, Winter, Spring, Summer)
-        const [seasonA, yearA] = a.split(' ')
-        const [seasonB, yearB] = b.split(' ')
-        
-        if (yearA !== yearB) {
-          return yearA.localeCompare(yearB)
-        }
-        
-        // Same year, sort by season order: Fall, Winter, Spring, Summer
-        const seasonOrder = { 'Fall': 1, 'Winter': 2, 'Spring': 3, 'Summer': 4 }
-        const orderA = seasonOrder[seasonA] || 999
-        const orderB = seasonOrder[seasonB] || 999
-        
-        return orderA - orderB
-      })
-      
-      setSemestersOptions(sortedOptions)
-      setSemesterMapping(mapping)
+      // Use the data as it appears in the server response
+      setSemestersOptions(allPeriods.sort())
     } catch (error) {
       console.error('Error fetching Semesters:', error)
       setSemestersOptions([])
-      setSemesterMapping({})
     }
   }
 
@@ -182,28 +144,25 @@ function Controls() {
 
   const fetchCourseData = async () => {
     try {      
-      // Convert selected Season/Year options to full period array
-      const selectedPeriods = []
-      semesters.forEach(seasonYear => {
-        if (semesterMapping[seasonYear]) {
-          selectedPeriods.push(...semesterMapping[seasonYear])
-        }
-      })
-      
       const params = new URLSearchParams({
         searchTerms: searchTerms,
         department: department,
         description: description,
-        days: selectedDays.join(','),
-        levels: selectedLevels.join(','),
+        days: JSON.stringify(selectedDays),
+        levels: JSON.stringify(selectedLevels),
         page: paginationModel.page,
-        iqAttributes: selectedIQAttributes.join(','),
+        iqAttributes: JSON.stringify(selectedIQAttributes),
+        integrationAttributes: JSON.stringify(selectedIntegrationAttributes),
         academicRequirements: academicRequirements,
-        startTimes: startTimes.join(','),
-        semesters: selectedPeriods.join(','),
-        courseSectionOwningAU: courseSectionOwningAU.join(','),
+        startTimes: JSON.stringify(startTimes),
+        semesters: JSON.stringify(semesters),
+        courseSectionOwningAU: JSON.stringify(courseSectionOwningAU),
         pageSize: paginationModel.pageSize
       })
+
+      if (semesters.length < 1) {
+        throw new Error(`Missing Required Field: Academic Period`)
+      }
 
       const coursesResponse = await fetch(`${API_BASE_URL}/courses?${params}`)
       if (!coursesResponse.ok) {
@@ -229,12 +188,14 @@ function Controls() {
   }
 
   const handleSearchClick = () => {
+    setError(null)
     setLoading(true)
     fetchCourseData()
     setSearchPerformed(true)
   }
 
   const resetFilters = () => {
+    setError(null)
     setSearchTerms('')
     setDescription('')
     setDepartment('')
@@ -242,6 +203,7 @@ function Controls() {
     setSelectedLevels([])
     setMajorRequirement([])
     setSelectedIQAttributes([])
+    setSelectedIntegrationAttributes([])
     setAcademicRequirements('')
     setHideFilters(false)
     setTotalCount(null)
@@ -306,6 +268,18 @@ function Controls() {
     }
   }
 
+  const handleSelectedIntegrationAttributesChange = (event) => {
+    if (event) {
+      if (event.target.value.indexOf('clear') !== -1) {
+        setSelectedIntegrationAttributes([])
+      } else if (event.target.value.indexOf('all') !== -1) {
+        setSelectedIntegrationAttributes(integrationAttributesOptions)
+      } else {
+        setSelectedIntegrationAttributes(event.target.value)
+      }
+    }
+  }
+
   const handleSelectedSemestersChange = (event) => {
     if (event) {
       if (event.target.value.indexOf('clear') !== -1) {
@@ -356,6 +330,7 @@ function Controls() {
   // Fetch IQ Attributes on component mount
   React.useEffect(() => {
     fetchIQAttributes()
+    fetchIntegrationAttributes()
     fetchProgramsOfStudy()
     fetchAcademicRequirements()
     fetchSemesters()
@@ -377,6 +352,18 @@ function Controls() {
     <>
       <div className={filteredRows.length === 0 ? 'search-fields search-fields-base' : 'search-fields'}>
         <Box className={hideFilters || showModal ? 'search-fields-form hidden' : 'search-fields-form'} sx={{ m: 3, marginTop: '25px' }}>
+          {semestersOptions.length > 1 && (
+            <Dropdown
+              label='Filter by Academic Period*'
+              val={semesters}
+              handleValChange={handleSelectedSemestersChange}
+              options={semestersOptions}
+              allowMultiple={true}
+              required={true}
+              error={error}
+            />
+          )}
+
           <Autocomplete
             sx={{ width: '100%', mb: 2 }}
             id='outlined-controlled'
@@ -418,6 +405,14 @@ function Controls() {
             handleValChange={handleSelectedIQAttributesChange}
             options={iqAttributesOptions}
             allowMultiple={true}
+          />
+
+          <Dropdown
+            label='Filter by A&S IQ Integration'
+            val={selectedIntegrationAttributes}
+            handleValChange={handleSelectedIntegrationAttributesChange}
+            options={integrationAttributesOptions}
+            allowMultiple={true}
           />          
           
           <Autocomplete
@@ -458,7 +453,7 @@ function Controls() {
             }}
           />
 
-          {false && <TextField
+          <TextField
             sx={{ width: '100%', mb: 2 }}
             id='outlined-controlled'
             label='Search by Description'
@@ -471,7 +466,7 @@ function Controls() {
                 handleSearchClick()
               }
             }}
-          /> }
+          />
 
           <Dropdown
             label='Filter by Days'
@@ -496,16 +491,6 @@ function Controls() {
             options={Constants.levelOptions}
             allowMultiple={true}
           />
-
-          {semestersOptions.length > 1 && (
-            <Dropdown
-              label='Filter by Academic Period'
-              val={semesters}
-              handleValChange={handleSelectedSemestersChange}
-              options={semestersOptions}
-              allowMultiple={true}
-            />
-          )}
 
           {departmentsOptions.length > 1 && (
             <Dropdown
@@ -536,11 +521,16 @@ function Controls() {
             </div>
           )}
         </Box>
-          {filteredRows.length === 0 && !loading && searchPerformed && (
+          {filteredRows.length === 0 && !loading && searchPerformed && !error && (
           <div className='no-results'>
             <h1>No results found</h1>
-          </div>
-      )}
+          </div>)}
+
+        {filteredRows.length === 0 && !loading && searchPerformed && error && (
+          <div className='no-results'>
+            <h1>Error: {error}</h1>
+          </div>)}
+
       </div>
       <CourseModal 
         isOpen={showModal}

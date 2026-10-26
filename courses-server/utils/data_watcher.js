@@ -1,18 +1,27 @@
 const fs = require('fs');
 const path = require('path');
 
+// Uploading data.csv (sftp put in the deploy scripts) fires a 'change' event for
+// every chunk written. Wait until the file has been quiet this long before
+// reloading, so one upload means one reload of the finished file.
+const RELOAD_DEBOUNCE_MS = 5000;
+
 class FileWatcher {
-  constructor(dataLoader) {
+  constructor(dataLoader, { dataFilePath = path.join(__dirname, '../data/data.csv'), debounceMs = RELOAD_DEBOUNCE_MS } = {}) {
     this.dataLoader = dataLoader;
+    this.dataFilePath = dataFilePath;
+    this.debounceMs = debounceMs;
     this.fileWatcher = null;
     this.lastModified = null;
     this.reloadInProgress = false;
+    this.reloadPending = false; // A change arrived mid-reload; reload again when done
+    this.debounceTimer = null;
     this.pollingInterval = null;
   }
 
   setupFileWatcher() {
-    const dataFilePath = path.join(__dirname, '../data/data.csv');
-    
+    const dataFilePath = this.dataFilePath;
+
     // Check if file exists
     if (!fs.existsSync(dataFilePath)) {
       console.log('data.csv not found, file watcher not set up');
@@ -34,10 +43,7 @@ class FileWatcher {
       
       // Handle both 'change' and 'rename' events (rename happens when file is replaced)
       if (eventType === 'change' || eventType === 'rename') {
-        // Add a small delay to ensure file is fully written
-        setTimeout(() => {
-          this.handleFileChange();
-        }, 100);
+        this.scheduleReload();
       }
     });
 
@@ -47,7 +53,7 @@ class FileWatcher {
         const currentModified = fs.statSync(dataFilePath).mtime.getTime();
         if (currentModified !== this.lastModified) {
           console.log('File change detected via polling');
-          this.handleFileChange();
+          this.scheduleReload();
         }
       } catch (error) {
         console.error('Error in polling check:', error);
@@ -57,46 +63,52 @@ class FileWatcher {
     console.log('File watcher and polling set up for data.csv');
   }
 
-  handleFileChange() {
+  // Restart the quiet-period timer on every event; reload once events stop.
+  scheduleReload() {
+    clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => {
+      this.debounceTimer = null;
+      this.handleFileChange();
+    }, this.debounceMs);
+  }
+
+  async handleFileChange() {
+    // Set synchronously, before any await, so overlapping calls can't both start
+    // a reload (each one holds a full copy of the data while it parses).
     if (this.reloadInProgress) {
-      console.log('Reload already in progress, skipping');
+      console.log('Reload already in progress, will reload again when it finishes');
+      this.reloadPending = true;
       return;
     }
+    this.reloadInProgress = true;
 
-    const dataFilePath = path.join(__dirname, '../data/data.csv');
-    
-    // Add delay to ensure file is fully written
-    setTimeout(async () => {
-      try {
-        const currentModified = fs.statSync(dataFilePath).mtime.getTime();
-        
-        if (currentModified === this.lastModified) {
-          console.log('File modification time unchanged, skipping reload');
-          return;
-        }
+    try {
+      const currentModified = fs.statSync(this.dataFilePath).mtime.getTime();
 
-        this.reloadInProgress = true;
-        console.log('File change detected, reloading data...');
-        
-        // Set data as not loaded
-        this.dataLoader.isDataLoaded = false;
-        
-        // Reload the data
-        await this.dataLoader.loadCourseData();
-        
-        // Update last modified time
-        this.lastModified = currentModified;
-        
-        console.log('Data reloaded successfully');
-      } catch (error) {
-        console.error('Error reloading data:', error);
-      } finally {
-        this.reloadInProgress = false;
+      if (currentModified === this.lastModified) {
+        console.log('File modification time unchanged, skipping reload');
+        return;
       }
-    }, 200);
+
+      console.log('File change detected, reloading data...');
+      await this.dataLoader.loadCourseData();
+      this.lastModified = currentModified;
+      console.log('Data reloaded successfully');
+    } catch (error) {
+      console.error('Error reloading data:', error);
+    } finally {
+      this.reloadInProgress = false;
+      if (this.reloadPending) {
+        this.reloadPending = false;
+        this.scheduleReload();
+      }
+    }
   }
 
   cleanupFileWatcher() {
+    clearTimeout(this.debounceTimer);
+    this.debounceTimer = null;
+
     if (this.fileWatcher) {
       this.fileWatcher.close();
       this.fileWatcher = null;
