@@ -131,10 +131,25 @@ class DataLoader {
       const academicPeriods = [];
       let duplicateCount = 0;
 
+      // The CSV repeats each section once per Program of Study / Academic
+      // Requirement, so most cell values are repeats -- Description alone is over
+      // half the file's text. The parser hands back a fresh string for every cell;
+      // map each value to one shared copy so repeats cost a pointer, not the text.
+      const strings = new Map();
+      const intern = value => {
+        const existing = strings.get(value);
+        if (existing !== undefined) return existing;
+        strings.set(value, value);
+        return value;
+      };
+
       fs.createReadStream(path.join(__dirname, '../data/data.csv'))
         .pipe(csv.parse({ headers: true }))
         .on('error', error => reject(error))
-        .on('data', row => {
+        .on('data', parsedRow => {
+          const row = {};
+          for (const key in parsedRow) row[key] = intern(parsedRow[key]);
+
           // Generate unique ID
           const courseId = this.generateCourseId(row);
           const commonID = this.generateCommonID(row);
